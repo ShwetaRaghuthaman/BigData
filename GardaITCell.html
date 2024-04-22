@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
+
+  
+<title>US Crime Analytics Unit</title>
+<style>
+    .container-design {
+        max-width: 100%;
+        background-color: #ffffff; /* Background color of the div */
+        border-radius: 10px; /* Rounded corners */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Box shadow effect */
+        overflow-x: auto; /* Add horizontal scroll to the container */
+    }
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f2f2f2;
+    }
+    .container {
+        /* max-width: 800px; */
+        margin: 0 auto;
+        padding: 20px;
+        margin-top: 5%;
+    }
+    .header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .row {
+        display: flex;
+        flex-direction: row;
+        margin-bottom: 10px;
+    }   
+    .col {
+        display: flex;
+        flex-direction: column;
+        margin-right: 10px;
+        width: 231px;
+    }
+    .col:last-child {
+        margin-right: 0;
+    }
+    p {
+        font-size: 16px;
+        margin-bottom: 5px;
+    }
+    button {
+        padding: 10px 20px;
+        background-color: #579ae1;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #0056b3;
+    }
+    input[type="file"] {
+        margin-bottom: 10px;
+    }
+
+   /* CSS styles for the table */
+   #apiResponseTable {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#apiResponseTable th, #apiResponseTable td {
+    padding: 12px;
+    border: 1px solid #ddd;
+}
+
+#apiResponseTable th {
+    background-color: #579ae1; /* Green color for header */
+    color: white; /* Text color for header */
+}
+
+#apiResponseTable tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+#apiResponseTable tbody tr:hover {
+    background-color: #ddd;
+}
+
+#apiResponseTable caption {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+</style>
+</head>
+<body>
+    
+    <div class="container container-design">
+        <div class="header">
+            <h1>US Crime Analytics Unit</h1>
+        </div>
+        <div class="row">
+            <div class="col">
+                <p>Download Employment</p>
+            </div>
+            <div class="col">
+                <button onclick="downloadEmployment()">Download Employment</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <p>Download Crime</p>
+            </div>
+            <div class="col">
+                <button onclick="downloadCrime()">Download Crime</button>
+            </div>
+        </div>
+        <div class="row">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="file" id="fileInput" name="files[]" multiple>
+                <button type="submit">Upload</button>
+            </form>
+        </div>
+        <div class="row">
+            <div class="col">
+                <p>Fetch Data</p>
+            </div>
+            <div class="col">
+                <button onclick="fetchData()">Fetch Data</button>            </div>
+        </div>
+        <div style="overflow-x: auto;">
+            <table id="apiResponseTable">
+                <caption>Analysis Result</caption>
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>R2</th>
+                        <th>RMSE</th>
+                        <th>homicides_percapita</th>
+                        <th>rapes_percapita</th>
+                        <th>assaults_percapita</th>
+                        <th>robberies_percapita</th>
+                        <th>unemployment rate</th>
+                        <th>Poverty Rate</th>
+                        <th>Intercept</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    
+
+
+
+<script>
+
+function fetchData() {
+            fetch('http://localhost:8000/getTest', {
+        method: 'GET',
+    })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Display data in HTML
+                    displayData(data);
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+        }
+
+function displayData(data) {
+            const table = document.getElementById('apiResponseTable');
+            const tableBody = table.querySelector('tbody');
+            if (!tableBody) {
+                console.error('Table body not found.');
+                return;
+            }
+
+            // Clear previous data
+            tableBody.innerHTML = '';
+
+            // Show the table only if there is data
+            if (data.length === 0) {
+                table.style.display = 'none';
+                return;
+            } else {
+                table.style.display = '';
+            }
+
+           
+
+            // Iterate over the data and create table rows
+    data.forEach((item, index) => {
+        const row = document.createElement('tr');
+        Object.keys(item).forEach(key => {
+            const cell = document.createElement('td');
+            cell.textContent = item[key];
+            row.appendChild(cell);
+        });
+        tableBody.appendChild(row);
+    });
+        }
+ 
+function downloadEmployment() {
+    var githubRawUrl = 'https://raw.githubusercontent.com/ShwetaRaghuthaman/BigData/main/US_unemploymentRate.csv';
+
+    fetch(githubRawUrl)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to download file');
+        }
+        return response.text();
+    })
+    .then(csvData => {
+        // Create a blob from the CSV data
+        var blob = new Blob([csvData], { type: 'text/csv' });
+
+        // Create an anchor element
+        var link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.setAttribute('download', 'US_unemploymentRate.csv');
+        link.style.display = 'none';
+
+        // Append the anchor element to the body
+        document.body.appendChild(link);
+
+        // Trigger the download
+        link.click();
+
+        // Clean up
+        document.body.removeChild(link);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to download file');
+    });
+}
+
+function downloadCrime() {
+    var githubRawUrl = 'https://raw.githubusercontent.com/ShwetaRaghuthaman/BigData/main/crimeData.csv';
+
+    fetch(githubRawUrl)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to download file');
+        }
+        return response.text();
+    })
+    .then(csvData => {
+        // Create a blob from the CSV data
+        var blob = new Blob([csvData], { type: 'text/csv' });
+
+        // Create an anchor element
+        var link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.setAttribute('download', 'crimeData.csv');
+        link.style.display = 'none';
+
+        // Append the anchor element to the body
+        document.body.appendChild(link);
+
+        // Trigger the download
+        link.click();
+
+        // Clean up
+        document.body.removeChild(link);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to download file');
+    });
+}
+
+document.getElementById('uploadForm').addEventListener('submit', function(event) {
+    event.preventDefault(); // Prevent form submission
+    var fileInput = document.getElementById('fileInput');
+    var files = fileInput.files;
+
+    if (files.length === 0) {
+        alert('Please select at least one file to upload.');
+        return;
+    }
+
+    uploadFiles(files);
+});
+function uploadFiles(files) {
+    var formData = new FormData();
+    var fileList=[]
+    var j=0;
+
+    for (var i = 0; i < files.length; i++) {
+        formData.append('files[]', files[i]);
+        fileList[i]=files[i].name;
+    }
+
+
+    fetch('http://localhost:8000/uploadTest', {
+        method: 'POST',
+        body: fileList//formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to upload files');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Files uploaded successfully:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+</script>
+
+
+</body>
+</html>
